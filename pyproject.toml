@@ -7,7 +7,15 @@ authors = [
     { name = "septem9907", email = "septem9907@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "yfinance>=0.2.54",
+    "polars>=1.0.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "scipy>=1.13.0",
+    "matplotlib>=3.9.0",
+    "statsmodels>=0.14.0",
+]
 
 [project.scripts]
 yetanotherquant = "yetanotherquant:main"
