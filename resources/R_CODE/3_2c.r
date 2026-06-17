@@ -1,0 +1,11 @@
+#... run after running 3.2a otherwise it will not work
+daxMonthlyRets = periodReturn(GDAXI, period='monthly')
+n = length(daxMonthlyRets)
+mu = mean(daxMonthlyRets)
+sigma = sd(daxMonthlyRets)
+normalRets = rnorm(n, mu, sigma)
+par(mfrow=c(3,1))
+plot(daxMonthlyRets)
+qqnorm(daxMonthlyRets)
+plot(density(daxMonthlyRets), lwd=2)
+lines(density(normalRets), lwd=2, col="grey")
