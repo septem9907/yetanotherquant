@@ -1,7 +1,11 @@
-u = seq(1,100)/100 #fractions
-expectedGrowthRates = 0.5*(log(1 + 1.7*u) + log(1 - 0.7*u))
-plot(u, expectedGrowthRates, type="l", lwd=2)
-abline(v=0.42, col="grey")
-abline(h=expectedGrowthRates[42], col="grey")
-abline(h=expectedGrowthRates[100], col="grey")
-which.max(expectedGrowthRates)
+# Kernel density comparison: binomial coin-toss outcomes vs. fitted normal.
+# Shows how the binomial distribution resembles a normal at moderate N.
+
+N_TOSSES = 10
+N_SIMULATIONS = 200
+coinTosses = rbinom(N_SIMULATIONS, N_TOSSES, 0.55)
+mu = mean(coinTosses)
+sigma = sd(coinTosses)
+normalRV = rnorm(N_SIMULATIONS, mu, sigma)
+plot(density(coinTosses), lwd=2)
+lines(density(normalRV), lwd=2, col="grey")

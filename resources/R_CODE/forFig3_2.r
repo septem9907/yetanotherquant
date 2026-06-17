@@ -1,10 +1,12 @@
-N_TOSSES = 10
-N_SIMULATIONS = 1000
-coinTosses = rbinom(N_SIMULATIONS, N_TOSSES, 0.55)
-h<-hist(coinTosses, breaks=10, col="grey",
-  xlab="Number of Heads",
-  main="Histogram with Normal Curve")
-xfit<-seq(min(coinTosses),max(coinTosses),length=1000)
-yfit<-dnorm(xfit,mean=mean(coinTosses),sd=sd(coinTosses))
-yfit <- yfit*diff(h$mids[1:2])*length(coinTosses)
-lines(xfit, yfit, col="black", lwd=2)
+# Kelly criterion illustration for a coin-toss game:
+# win ratio 1.7, loss ratio 0.7, fair coin (p=0.5).
+# Expected log-growth rate = 0.5*log(1+1.7f) + 0.5*log(1-0.7f),
+# maximised analytically at f* = (p/l - q/w) = 0.5/0.7 - 0.5/1.7 ≈ 0.42.
+
+u = seq(1, 100) / 100  # fraction of capital bet: 1% to 100%
+expectedGrowthRates = 0.5 * (log(1 + 1.7*u) + log(1 - 0.7*u))
+plot(u, expectedGrowthRates, type="l", lwd=2)
+abline(v=0.42, col="grey")                           # optimal Kelly fraction
+abline(h=expectedGrowthRates[42], col="grey")        # expected growth at Kelly
+abline(h=expectedGrowthRates[100], col="grey")       # expected growth at 100% bet (negative)
+which.max(expectedGrowthRates)
