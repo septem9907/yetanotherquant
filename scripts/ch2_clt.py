@@ -6,12 +6,14 @@ Pass --save to write plots to disk instead of displaying interactively.
 """
 
 import argparse
+
 import matplotlib
 import matplotlib.pyplot as plt
+
 from yetanotherquant.chapter2.clt import (
-    simulate_coin_tosses,
-    plot_histogram_with_normal,
     plot_density_comparison,
+    plot_histogram_with_normal,
+    simulate_coin_tosses,
 )
 
 parser = argparse.ArgumentParser()
@@ -33,7 +35,7 @@ print(f"[Fig 2.2] mean={tosses_small.mean():.2f}  std={tosses_small.std():.2f}")
 
 if args.save:
     fig1.savefig("fig2_1_histogram.png", dpi=120, bbox_inches="tight")
-    fig2.savefig("fig2_2_density.png",   dpi=120, bbox_inches="tight")
+    fig2.savefig("fig2_2_density.png", dpi=120, bbox_inches="tight")
     print("Saved fig2_1_histogram.png and fig2_2_density.png")
 else:
     plt.show()

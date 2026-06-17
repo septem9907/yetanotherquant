@@ -6,11 +6,11 @@ Tests DAX daily returns for serial randomness using:
   - Autocorrelation function (ACF) plot
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
-import matplotlib.pyplot as plt
-from statsmodels.sandbox.stats.runs import runstest_1samp as sm_runs_test
 from statsmodels.graphics.tsaplots import plot_acf
+from statsmodels.sandbox.stats.runs import runstest_1samp as sm_runs_test
 
 
 def runs_test(returns: np.ndarray) -> dict:
@@ -50,9 +50,11 @@ def plot_acf_grid(
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 4 * n_rows))
     axes = np.array(axes).flatten()
 
-    for ax, (title, slc) in zip(axes, sub_ranges.items()):
+    for ax, (title, slc) in zip(axes, sub_ranges.items(), strict=False):
         segment = returns[slc]
-        plot_acf(segment, lags=min(lags, len(segment) - 1), ax=ax, title=title, zero=False)
+        plot_acf(
+            segment, lags=min(lags, len(segment) - 1), ax=ax, title=title, zero=False
+        )
 
     for ax in axes[n_panels:]:
         ax.set_visible(False)
@@ -71,6 +73,8 @@ def runs_test_report(returns: np.ndarray, sub_ranges: dict[str, slice]) -> pl.Da
     for label, slc in sub_ranges.items():
         segment = returns[slc]
         res = runs_test(segment)
-        rows.append({"period": label, "statistic": res["statistic"], "p_value": res["p_value"]})
+        rows.append(
+            {"period": label, "statistic": res["statistic"], "p_value": res["p_value"]}
+        )
 
     return pl.DataFrame(rows)

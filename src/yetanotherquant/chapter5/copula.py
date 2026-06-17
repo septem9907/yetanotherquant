@@ -8,13 +8,14 @@ Functions for:
 """
 
 import numpy as np
-from scipy.stats import norm, multivariate_normal
-from yetanotherquant.chapter3.returns import max_drawdown
+from scipy.stats import norm
 
+from yetanotherquant.chapter3.returns import max_drawdown
 
 # ---------------------------------------------------------------------------
 # Gaussian copula with binary returns (5_6a.r)
 # ---------------------------------------------------------------------------
+
 
 def build_corr_matrix(corr: float, n: int) -> np.ndarray:
     """Uniform pairwise correlation matrix: off-diagonal = corr, diagonal = 1."""
@@ -87,24 +88,24 @@ def sequential_trading_simulation(
     n_blocks = n_total // n_trades_per_block
 
     term_wealth = np.empty(n_blocks)
-    mdd_values  = np.empty(n_blocks)
+    mdd_values = np.empty(n_blocks)
 
     for b in range(n_blocks):
         start = b * n_trades_per_block
-        block_rets = returns[start: start + n_trades_per_block]
+        block_rets = returns[start : start + n_trades_per_block]
         wealth = np.cumprod(1 + block_rets)
         wealth_full = np.insert(wealth, 0, 1.0)
         term_wealth[b] = wealth[-1]
-        mdd_values[b]  = max_drawdown(wealth_full)
+        mdd_values[b] = max_drawdown(wealth_full)
 
     log_growth = np.log(term_wealth)
     return {
-        "terminal_wealth":          term_wealth,
-        "max_drawdown":             mdd_values,
-        "mean_log_growth_rate":     float(np.mean(log_growth)),
-        "std_log_growth_rate":      float(np.std(log_growth)),
-        "mean_mdd":                 float(np.mean(mdd_values)),
-        "std_mdd":                  float(np.std(mdd_values)),
+        "terminal_wealth": term_wealth,
+        "max_drawdown": mdd_values,
+        "mean_log_growth_rate": float(np.mean(log_growth)),
+        "std_log_growth_rate": float(np.std(log_growth)),
+        "mean_mdd": float(np.mean(mdd_values)),
+        "std_mdd": float(np.std(mdd_values)),
     }
 
 
@@ -112,7 +113,10 @@ def sequential_trading_simulation(
 # Clayton copula comparison (5_7.r)
 # ---------------------------------------------------------------------------
 
-def sample_clayton_copula(theta: float, n_sim: int, seed: int | None = None) -> np.ndarray:
+
+def sample_clayton_copula(
+    theta: float, n_sim: int, seed: int | None = None
+) -> np.ndarray:
     """
     Sample from a bivariate Clayton copula with parameter theta (theta > 0).
 
@@ -127,7 +131,7 @@ def sample_clayton_copula(theta: float, n_sim: int, seed: int | None = None) -> 
     u = rng.uniform(size=n_sim)
     t = rng.uniform(size=n_sim)
     # Conditional inverse CDF
-    v = (u**(-theta) * (t**(-theta / (theta + 1)) - 1) + 1) ** (-1 / theta)
+    v = (u ** (-theta) * (t ** (-theta / (theta + 1)) - 1) + 1) ** (-1 / theta)
     v = np.clip(v, 1e-10, 1 - 1e-10)
     return np.column_stack([u, v])
 
@@ -150,10 +154,12 @@ def gaussian_copula_normal_margins(
     Mirrors R: mvrnorm() in 5_7.r
     """
     rng = np.random.default_rng(seed)
-    cov = np.array([
-        [sigma_diag[0]**2,             rho * sigma_diag[0] * sigma_diag[1]],
-        [rho * sigma_diag[0] * sigma_diag[1], sigma_diag[1]**2],
-    ])
+    cov = np.array(
+        [
+            [sigma_diag[0] ** 2, rho * sigma_diag[0] * sigma_diag[1]],
+            [rho * sigma_diag[0] * sigma_diag[1], sigma_diag[1] ** 2],
+        ]
+    )
     return rng.multivariate_normal(mean, cov, size=n_sim)
 
 
@@ -176,8 +182,10 @@ def clayton_copula_normal_margins(
     Mirrors R: rmvdc(myMvd, n) with clayton copula in 5_7.r
     """
     uniforms = sample_clayton_copula(theta, n_sim, seed=seed)
-    samples = np.column_stack([
-        norm.ppf(uniforms[:, 0], loc=mean[0], scale=sigma_diag[0]),
-        norm.ppf(uniforms[:, 1], loc=mean[1], scale=sigma_diag[1]),
-    ])
+    samples = np.column_stack(
+        [
+            norm.ppf(uniforms[:, 0], loc=mean[0], scale=sigma_diag[0]),
+            norm.ppf(uniforms[:, 1], loc=mean[1], scale=sigma_diag[1]),
+        ]
+    )
     return samples

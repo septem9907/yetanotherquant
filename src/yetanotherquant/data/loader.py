@@ -6,19 +6,23 @@ it as a Polars DataFrame. Pandas is used as the intermediate format since
 yfinance returns pandas DataFrames natively.
 """
 
-import yfinance as yf
+import numpy as np
 import pandas as pd
 import polars as pl
-import numpy as np
+import yfinance as yf
 
 
-def fetch_prices(ticker: str, start: str = "1990-01-01", end: str | None = None) -> pl.DataFrame:
+def fetch_prices(
+    ticker: str, start: str = "1990-01-01", end: str | None = None
+) -> pl.DataFrame:
     """
     Download daily OHLCV data from Yahoo Finance.
 
     Returns a Polars DataFrame with columns: date, open, high, low, close, volume.
     """
-    raw: pd.DataFrame = yf.download(ticker, start=start, end=end, auto_adjust=True, progress=False)
+    raw: pd.DataFrame = yf.download(
+        ticker, start=start, end=end, auto_adjust=True, progress=False
+    )
     if raw.empty:
         raise ValueError(f"No data returned for ticker {ticker!r}")
 
@@ -44,7 +48,9 @@ def daily_returns(df: pl.DataFrame, price_col: str = "close") -> pl.Series:
     return (prices / prices.shift(1) - 1).rename("return")
 
 
-def period_returns(df: pl.DataFrame, period: str = "monthly", price_col: str = "close") -> pl.DataFrame:
+def period_returns(
+    df: pl.DataFrame, period: str = "monthly", price_col: str = "close"
+) -> pl.DataFrame:
     """
     Aggregate to monthly or weekly returns using close prices.
 
@@ -53,9 +59,9 @@ def period_returns(df: pl.DataFrame, period: str = "monthly", price_col: str = "
     Mirrors R's periodReturn(data, period='monthly').
     """
     df = df.with_columns(
-        pl.col("date").dt.truncate(
-            "1mo" if period == "monthly" else "1w"
-        ).alias("period")
+        pl.col("date")
+        .dt.truncate("1mo" if period == "monthly" else "1w")
+        .alias("period")
     )
 
     # Take last close price of each period

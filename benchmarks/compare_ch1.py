@@ -9,13 +9,14 @@ The Monte Carlo result is stochastic — we verify it falls within ±3 standard 
 """
 
 import numpy as np
+
 from yetanotherquant.chapter1.probability import exact_tail_prob, monte_carlo_tail_prob
 
-R_EXACT   = 0.028443966      # from R: 1 - pbinom(59, 100, 0.5)
-N, K, P   = 100, 60, 0.5
-N_SIM     = 100_000
-TOLERANCE = 1e-8              # exact value must match to this precision
-MC_SE_MULTIPLIER = 3.0        # MC value must be within 3 standard errors
+R_EXACT = 0.028443966  # from R: 1 - pbinom(59, 100, 0.5)
+N, K, P = 100, 60, 0.5
+N_SIM = 100_000
+TOLERANCE = 1e-8  # exact value must match to this precision
+MC_SE_MULTIPLIER = 3.0  # MC value must be within 3 standard errors
 
 
 def check(name: str, python_val: float, r_val: float, tol: float) -> bool:
@@ -38,7 +39,9 @@ def run() -> bool:
 
     # --- Exact value ---
     py_exact = exact_tail_prob(N, K, P)
-    all_pass &= check("Exact binomial P(X>=60 | Bin(100,0.5))", py_exact, R_EXACT, TOLERANCE)
+    all_pass &= check(
+        "Exact binomial P(X>=60 | Bin(100,0.5))", py_exact, R_EXACT, TOLERANCE
+    )
 
     # --- Monte Carlo ---
     py_mc = monte_carlo_tail_prob(N, K, P, n_sim=N_SIM, seed=42)
@@ -54,4 +57,5 @@ def run() -> bool:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(0 if run() else 1)

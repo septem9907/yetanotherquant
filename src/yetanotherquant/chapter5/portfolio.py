@@ -8,16 +8,14 @@ Functions for:
   - Implied drift estimation (analogous to implied volatility)
 """
 
+
 import numpy as np
 import polars as pl
-from scipy.stats import norm
-from itertools import product
-import matplotlib.pyplot as plt
-
 
 # ---------------------------------------------------------------------------
 # Correlation analysis (5_1.r, 5_3.r)
 # ---------------------------------------------------------------------------
+
 
 def correlation_matrix(returns_dict: dict[str, np.ndarray]) -> pl.DataFrame:
     """
@@ -36,6 +34,7 @@ def correlation_matrix(returns_dict: dict[str, np.ndarray]) -> pl.DataFrame:
 # ---------------------------------------------------------------------------
 # Nekrasov's formula (5_2.r, 5_2a.r)
 # ---------------------------------------------------------------------------
+
 
 def estimate_sigma(returns_matrix: np.ndarray, r_f: float) -> np.ndarray:
     """
@@ -76,6 +75,7 @@ def nekrasov_optimal(
 # Brute-force optimal fraction (5_2.r)
 # ---------------------------------------------------------------------------
 
+
 def brute_force_two_asset(
     mu: np.ndarray,
     cov: np.ndarray,
@@ -96,7 +96,6 @@ def brute_force_two_asset(
 
     Mirrors R: allFracs() in 5_2.r
     """
-    from scipy.stats import multivariate_normal as mvn_dist
 
     rng = np.random.default_rng(seed)
 
@@ -105,11 +104,7 @@ def brute_force_two_asset(
     all_rets = np.clip(all_rets, -0.95, 0.95)
 
     # Build list of (f1, f2) pairs
-    frac_pairs = [
-        (i / 100, j / 100)
-        for i in range(101)
-        for j in range(101 - i)
-    ]
+    frac_pairs = [(i / 100, j / 100) for i in range(101) for j in range(101 - i)]
     n_combos = len(frac_pairs)
     fracs = np.array(frac_pairs)
     log_wealth = np.empty(n_combos)
@@ -127,16 +122,17 @@ def brute_force_two_asset(
 
     best = int(np.argmax(log_wealth))
     return {
-        "optimal_f1":          fracs[best, 0],
-        "optimal_f2":          fracs[best, 1],
+        "optimal_f1": fracs[best, 0],
+        "optimal_f2": fracs[best, 1],
         "mean_log_wealth_grid": log_wealth,
-        "fracs":               fracs,
+        "fracs": fracs,
     }
 
 
 # ---------------------------------------------------------------------------
 # Implied drift estimation (5_4.r)
 # ---------------------------------------------------------------------------
+
 
 def implied_drift(
     buy_price: float,
@@ -159,7 +155,7 @@ def implied_drift(
     Mirrors R: impliedDrift() in 5_4.r
     """
     rng = np.random.default_rng(seed)
-    target_up   = tp / buy_price
+    target_up = tp / buy_price
     target_down = sl / buy_price
     drifts = np.arange(1, n_steps + 1) / 10_000  # 0.01% to 0.10% per day
 
@@ -171,12 +167,14 @@ def implied_drift(
         prices = np.cumprod(1 + rets, axis=1)
 
         # Check if TP or SL is hit first
-        tp_hit = np.any(prices >= target_up,   axis=1)
+        tp_hit = np.any(prices >= target_up, axis=1)
         sl_hit = np.any(prices <= target_down, axis=1)
 
         # First-hit logic: TP wins if the TP crossing comes before SL
-        tp_first_idx = np.where(tp_hit, np.argmax(prices >= target_up,   axis=1), n_days)
-        sl_first_idx = np.where(sl_hit, np.argmax(prices <= target_down, axis=1), n_days)
+        tp_first_idx = np.where(tp_hit, np.argmax(prices >= target_up, axis=1), n_days)
+        sl_first_idx = np.where(
+            sl_hit, np.argmax(prices <= target_down, axis=1), n_days
+        )
 
         tp_counts[d] = float(np.mean(tp_hit & (tp_first_idx <= sl_first_idx)))
         sl_counts[d] = float(np.mean(sl_hit & (sl_first_idx < tp_first_idx)))
@@ -185,7 +183,7 @@ def implied_drift(
     best = int(np.argmin(residuals))
 
     return {
-        "implied_drift":       float(drifts[best]),
-        "empirical_tp_prob":   float(tp_counts[best]),
-        "empirical_sl_prob":   float(sl_counts[best]),
+        "implied_drift": float(drifts[best]),
+        "empirical_tp_prob": float(tp_counts[best]),
+        "empirical_sl_prob": float(sl_counts[best]),
     }

@@ -6,7 +6,7 @@ Pass --save to write plots to disk.
 """
 
 import argparse
-import numpy as np
+
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -16,8 +16,8 @@ args = parser.parse_args()
 if args.save:
     matplotlib.use("Agg")
 
-from yetanotherquant.data.loader import fetch_prices, daily_returns, to_numpy_returns
-from yetanotherquant.chapter4.randomness import runs_test_report, plot_acf_grid
+from yetanotherquant.chapter4.randomness import plot_acf_grid, runs_test_report
+from yetanotherquant.data.loader import daily_returns, fetch_prices, to_numpy_returns
 
 print("Downloading DAX (1990-11-26 to 2014-04-26)...")
 dax = fetch_prices("^GDAXI", start="1990-11-26", end="2014-04-26")
@@ -26,9 +26,9 @@ print(f"  {len(rets)} daily returns")
 
 sub_ranges = {
     "whole sample": slice(None),
-    "1st 1000":     slice(0, 1000),
-    "3rd 1000":     slice(2000, 3000),
-    "4th 1000":     slice(3000, 4000),
+    "1st 1000": slice(0, 1000),
+    "3rd 1000": slice(2000, 3000),
+    "4th 1000": slice(3000, 4000),
 }
 
 print("\nWald-Wolfowitz runs test results:")

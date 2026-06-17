@@ -17,6 +17,7 @@ the Python implementation is correct without running R.
 
 import numpy as np
 from scipy.stats import norm
+
 from yetanotherquant.chapter6.options import bs_call_price, bs_greeks
 
 
@@ -27,7 +28,7 @@ def bs_reference(S, K, T, r, sigma):
     value = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
     delta = norm.cdf(d1)
     gamma = norm.pdf(d1) / (S * sigma * np.sqrt(T))
-    vega  = S * norm.pdf(d1) * np.sqrt(T)
+    vega = S * norm.pdf(d1) * np.sqrt(T)
     return {"value": value, "delta": delta, "gamma": gamma, "vega": vega}
 
 
@@ -54,19 +55,22 @@ def run() -> bool:
     # ---- 1. Price at T=4 matches independent reference ----
     print("\n--- Call price at T=4yr (6_1.r parameters) ---")
     ref4 = bs_reference(S0, K, T=4, r=r, sigma=sigma0)
-    py4  = bs_greeks(S0, K, T=4, r=r, sigma=sigma0)
-    all_pass &= check("Price (T=4)",  py4["value"], ref4["value"],  tol=1e-8)
-    all_pass &= check("Delta (T=4)",  py4["delta"], ref4["delta"],  tol=1e-8)
-    all_pass &= check("Gamma (T=4)",  py4["gamma"], ref4["gamma"],  tol=1e-8)
-    all_pass &= check("Vega (T=4)",   py4["vega"],  ref4["vega"],   tol=1e-8)
+    py4 = bs_greeks(S0, K, T=4, r=r, sigma=sigma0)
+    all_pass &= check("Price (T=4)", py4["value"], ref4["value"], tol=1e-8)
+    all_pass &= check("Delta (T=4)", py4["delta"], ref4["delta"], tol=1e-8)
+    all_pass &= check("Gamma (T=4)", py4["gamma"], ref4["gamma"], tol=1e-8)
+    all_pass &= check("Vega (T=4)", py4["vega"], ref4["vega"], tol=1e-8)
 
     # ---- 2. Price at T=3 (one year later) ----
     print("\n--- Call price at T=3yr ---")
     ref3 = bs_reference(S0, K, T=3, r=r, sigma=sigma0)
-    py3  = bs_greeks(S0, K, T=3, r=r, sigma=sigma0)
-    all_pass &= check("Price (T=3) < Price (T=4)  [time decay]",
-                      1.0 if py3["value"] < py4["value"] else 0.0,
-                      1.0, tol=0.5)
+    py3 = bs_greeks(S0, K, T=3, r=r, sigma=sigma0)
+    all_pass &= check(
+        "Price (T=3) < Price (T=4)  [time decay]",
+        1.0 if py3["value"] < py4["value"] else 0.0,
+        1.0,
+        tol=0.5,
+    )
     all_pass &= check("Price (T=3)", py3["value"], ref3["value"], tol=1e-8)
 
     # ---- 3. Put-call parity: C - P = S - K*exp(-rT) ----
@@ -76,9 +80,11 @@ def run() -> bool:
     # Put via parity: P = C - S + K*exp(-rT)
     put_via_parity = c - S_atm + K_atm * np.exp(-r * T_atm)
     # Put via B-S directly (manually)
-    d1 = (np.log(S_atm/K_atm) + (r + 0.5*sigma0**2)*T_atm) / (sigma0*np.sqrt(T_atm))
-    d2 = d1 - sigma0*np.sqrt(T_atm)
-    put_direct = K_atm * np.exp(-r*T_atm) * norm.cdf(-d2) - S_atm * norm.cdf(-d1)
+    d1 = (np.log(S_atm / K_atm) + (r + 0.5 * sigma0**2) * T_atm) / (
+        sigma0 * np.sqrt(T_atm)
+    )
+    d2 = d1 - sigma0 * np.sqrt(T_atm)
+    put_direct = K_atm * np.exp(-r * T_atm) * norm.cdf(-d2) - S_atm * norm.cdf(-d1)
     all_pass &= check("Put-call parity", put_via_parity, put_direct, tol=1e-10)
 
     # ---- 4. Boundary: T→0 ----
@@ -91,14 +97,20 @@ def run() -> bool:
     # ---- 5. Deep OTM: price should be very small ----
     print("\n--- Deep OTM ---")
     py_deep_otm = bs_call_price(10.0, 1000.0, T=1.0, r=r, sigma=sigma0)
-    all_pass &= check("Deep OTM call < 0.01", 1.0 if py_deep_otm < 0.01 else 0.0, 1.0, tol=0.5)
+    all_pass &= check(
+        "Deep OTM call < 0.01", 1.0 if py_deep_otm < 0.01 else 0.0, 1.0, tol=0.5
+    )
 
     # ---- 6. Delta in [0, 1] for calls ----
     print("\n--- Delta bounds ---")
     for S_test in [10.0, 23.81, 50.0, 100.0]:
         g = bs_greeks(S_test, K, T=4, r=r, sigma=sigma0)
-        all_pass &= check(f"Delta in [0,1] for S={S_test}",
-                          1.0 if 0 <= g["delta"] <= 1 else 0.0, 1.0, tol=0.5)
+        all_pass &= check(
+            f"Delta in [0,1] for S={S_test}",
+            1.0 if 0 <= g["delta"] <= 1 else 0.0,
+            1.0,
+            tol=0.5,
+        )
 
     # ---- 7. Gamma > 0 ----
     print("\n--- Gamma positivity ---")
@@ -112,4 +124,5 @@ def run() -> bool:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(0 if run() else 1)

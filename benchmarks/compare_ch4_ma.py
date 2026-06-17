@@ -14,12 +14,13 @@ on a synthetic price series where the expected outcome is known.
 """
 
 import numpy as np
-from yetanotherquant.chapter4.strategies import simple_ma_strategy, dual_ma_crossover
+
+from yetanotherquant.chapter4.strategies import dual_ma_crossover, simple_ma_strategy
 
 # ---- Synthetic price series: perfect uptrend (MA must outperform) ----
 np.random.seed(42)
-UPTREND = np.cumprod(1 + np.full(500, 0.002))          # +0.2%/day: price always > MA
-RANDOM  = np.cumprod(1 + np.random.normal(0, 0.01, 500))  # random walk
+UPTREND = np.cumprod(1 + np.full(500, 0.002))  # +0.2%/day: price always > MA
+RANDOM = np.cumprod(1 + np.random.normal(0, 0.01, 500))  # random walk
 
 MA_DAYS = 200
 
@@ -38,35 +39,53 @@ def run() -> bool:
 
     # 1. MA strategy terminates in "inCash" state (no open position at end)
     res_up = simple_ma_strategy(UPTREND, ma_days=MA_DAYS)
-    print(f"\n  Uptrend series: ma_wealth={res_up['ma_wealth']:.4f}  bh_wealth={res_up['bh_wealth']:.4f}")
-    all_pass &= check("MA strategy returns a positive wealth", res_up["ma_wealth"] > 0,
-                      f"ma_wealth={res_up['ma_wealth']:.4f}")
+    print(
+        f"\n  Uptrend series: ma_wealth={res_up['ma_wealth']:.4f}  bh_wealth={res_up['bh_wealth']:.4f}"
+    )
+    all_pass &= check(
+        "MA strategy returns a positive wealth",
+        res_up["ma_wealth"] > 0,
+        f"ma_wealth={res_up['ma_wealth']:.4f}",
+    )
     all_pass &= check("BH wealth is positive", res_up["bh_wealth"] > 0)
-    all_pass &= check("Both wealths are finite", np.isfinite(res_up["ma_wealth"]) and
-                      np.isfinite(res_up["bh_wealth"]))
+    all_pass &= check(
+        "Both wealths are finite",
+        np.isfinite(res_up["ma_wealth"]) and np.isfinite(res_up["bh_wealth"]),
+    )
 
     # 2. Dual MA crossover produces valid output on the same series
     res_dual = dual_ma_crossover(UPTREND, short_days=38, long_days=MA_DAYS)
-    all_pass &= check("Dual MA crossover returns positive wealth", res_dual["ma_wealth"] > 0)
-    all_pass &= check("Dual MA bh_wealth matches simple_ma bh_wealth (same start day)",
-                      abs(res_dual["bh_wealth"] - res_up["bh_wealth"]) < 1e-9,
-                      f"dual_bh={res_dual['bh_wealth']:.6f}  simple_bh={res_up['bh_wealth']:.6f}")
+    all_pass &= check(
+        "Dual MA crossover returns positive wealth", res_dual["ma_wealth"] > 0
+    )
+    all_pass &= check(
+        "Dual MA bh_wealth matches simple_ma bh_wealth (same start day)",
+        abs(res_dual["bh_wealth"] - res_up["bh_wealth"]) < 1e-9,
+        f"dual_bh={res_dual['bh_wealth']:.6f}  simple_bh={res_up['bh_wealth']:.6f}",
+    )
 
     # 3. n_trades is non-negative
-    all_pass &= check("Number of trades >= 0", res_up["n_trades"] >= 0,
-                      f"n_trades={res_up['n_trades']}")
+    all_pass &= check(
+        "Number of trades >= 0",
+        res_up["n_trades"] >= 0,
+        f"n_trades={res_up['n_trades']}",
+    )
     all_pass &= check("Number of dual MA trades >= 0", res_dual["n_trades"] >= 0)
 
     # 4. Wealth on a flat series (all returns=0) should equal 1.0
     flat_prices = np.ones(500)
     try:
         res_flat = simple_ma_strategy(flat_prices, ma_days=MA_DAYS)
-        all_pass &= check("Flat price series: MA wealth = 1.0",
-                          abs(res_flat["ma_wealth"] - 1.0) < 1e-9,
-                          f"ma_wealth={res_flat['ma_wealth']:.8f}")
-        all_pass &= check("Flat price series: BH wealth = 1.0",
-                          abs(res_flat["bh_wealth"] - 1.0) < 1e-9,
-                          f"bh_wealth={res_flat['bh_wealth']:.8f}")
+        all_pass &= check(
+            "Flat price series: MA wealth = 1.0",
+            abs(res_flat["ma_wealth"] - 1.0) < 1e-9,
+            f"ma_wealth={res_flat['ma_wealth']:.8f}",
+        )
+        all_pass &= check(
+            "Flat price series: BH wealth = 1.0",
+            abs(res_flat["bh_wealth"] - 1.0) < 1e-9,
+            f"bh_wealth={res_flat['bh_wealth']:.8f}",
+        )
     except Exception as e:
         print(f"  [INFO] Flat series test skipped: {e}")
 
@@ -99,4 +118,5 @@ def run() -> bool:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(0 if run() else 1)

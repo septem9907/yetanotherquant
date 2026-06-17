@@ -9,13 +9,13 @@ Functions for:
   - Drawdown risk at a given Kelly fraction
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 # ---------------------------------------------------------------------------
 # Analytical Kelly
 # ---------------------------------------------------------------------------
+
 
 def analytical_kelly_coin(p_win: float, win_mult: float, loss_mult: float) -> float:
     """
@@ -31,7 +31,9 @@ def analytical_kelly_coin(p_win: float, win_mult: float, loss_mult: float) -> fl
     return p_win / loss_mult - q / win_mult
 
 
-def expected_growth_rate(fractions: np.ndarray, p_win: float, win_mult: float, loss_mult: float) -> np.ndarray:
+def expected_growth_rate(
+    fractions: np.ndarray, p_win: float, win_mult: float, loss_mult: float
+) -> np.ndarray:
     """
     Expected log-growth rate for each betting fraction in a coin-toss game.
 
@@ -40,7 +42,9 @@ def expected_growth_rate(fractions: np.ndarray, p_win: float, win_mult: float, l
     Mirrors R: forFig3_2.r
     """
     q = 1.0 - p_win
-    return p_win * np.log(1 + win_mult * fractions) + q * np.log(1 - loss_mult * fractions)
+    return p_win * np.log(1 + win_mult * fractions) + q * np.log(
+        1 - loss_mult * fractions
+    )
 
 
 def plot_growth_rate_curve(
@@ -71,6 +75,7 @@ def plot_growth_rate_curve(
 # ---------------------------------------------------------------------------
 # Numerical Kelly search (Monte Carlo)
 # ---------------------------------------------------------------------------
+
 
 def kelly_simulation(
     mu: float,
@@ -143,9 +148,18 @@ def kelly_sensitivity(
         mu_est = float(np.mean(sample))
         sigma_est = float(np.std(sample))
 
-        mlw = kelly_simulation(mu_est, sigma_est, r_f, n_steps, n_sim, n_months, seed=rng.integers(1e9))
+        mlw = kelly_simulation(
+            mu_est, sigma_est, r_f, n_steps, n_sim, n_months, seed=rng.integers(1e9)
+        )
         frac = optimal_kelly_fraction(mlw, n_steps)
-        results.append({"iteration": i + 1, "mu_est": mu_est, "sigma_est": sigma_est, "optimal_frac": frac})
+        results.append(
+            {
+                "iteration": i + 1,
+                "mu_est": mu_est,
+                "sigma_est": sigma_est,
+                "optimal_frac": frac,
+            }
+        )
 
     return results
 
@@ -153,6 +167,7 @@ def kelly_sensitivity(
 # ---------------------------------------------------------------------------
 # Wealth-path backtest at fixed fractions (3_3b.r)
 # ---------------------------------------------------------------------------
+
 
 def backtest_kelly_fractions(
     monthly_returns: np.ndarray,
@@ -182,6 +197,7 @@ def backtest_kelly_fractions(
 # Kelly fraction wealth comparison (forFig3_3.r)
 # ---------------------------------------------------------------------------
 
+
 def simulate_betting_strategies(
     n_trades: int = 30,
     p_win: float = 0.5,
@@ -209,13 +225,17 @@ def simulate_betting_strategies(
 
     for i in range(1, n_trades):
         if outcomes[i] == 0:  # loss
-            full_w[i]  = full_w[i-1]  * (1 - loss_mult)
-            kelly_w[i] = kelly_w[i-1] * (kelly_frac * (1 - loss_mult) + (1 - kelly_frac))
-            half_w[i]  = half_w[i-1]  * (hk          * (1 - loss_mult) + (1 - hk))
+            full_w[i] = full_w[i - 1] * (1 - loss_mult)
+            kelly_w[i] = kelly_w[i - 1] * (
+                kelly_frac * (1 - loss_mult) + (1 - kelly_frac)
+            )
+            half_w[i] = half_w[i - 1] * (hk * (1 - loss_mult) + (1 - hk))
         else:  # win
-            full_w[i]  = full_w[i-1]  * (1 + win_mult)
-            kelly_w[i] = kelly_w[i-1] * (kelly_frac * (1 + win_mult) + (1 - kelly_frac))
-            half_w[i]  = half_w[i-1]  * (hk          * (1 + win_mult) + (1 - hk))
+            full_w[i] = full_w[i - 1] * (1 + win_mult)
+            kelly_w[i] = kelly_w[i - 1] * (
+                kelly_frac * (1 + win_mult) + (1 - kelly_frac)
+            )
+            half_w[i] = half_w[i - 1] * (hk * (1 + win_mult) + (1 - hk))
 
     return {"full": full_w, "kelly": kelly_w, "half_kelly": half_w}
 
@@ -223,6 +243,7 @@ def simulate_betting_strategies(
 # ---------------------------------------------------------------------------
 # Drawdown risk at a given Kelly fraction (3_6b.r)
 # ---------------------------------------------------------------------------
+
 
 def drawdown_risk_at_fraction(
     mu: float,
@@ -260,7 +281,7 @@ def drawdown_risk_at_fraction(
 
     result = {
         "mean_terminal_log_wealth": float(np.mean(terminal_log)),
-        "std_terminal_log_wealth":  float(np.std(terminal_log)),
+        "std_terminal_log_wealth": float(np.std(terminal_log)),
     }
     for thr in dd_thresholds:
         result[f"prob_mdd_lt_{int(thr*100)}pct"] = float(np.mean(mdd_values < -thr))

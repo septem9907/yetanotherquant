@@ -7,6 +7,7 @@ into cash and stays there for the rest of the simulation period.
 """
 
 import numpy as np
+
 from yetanotherquant.chapter3.returns import max_drawdown
 
 
@@ -47,7 +48,7 @@ def simulate_portfolio_tpsl(
     n_assets = len(drifts)
 
     term_wealth = np.empty(n_sim)
-    mdd_values  = np.empty(n_sim)
+    mdd_values = np.empty(n_sim)
 
     for i in range(n_sim):
         # Draw correlated daily returns: shape (n_days, n_assets)
@@ -61,22 +62,25 @@ def simulate_portfolio_tpsl(
         for d in range(1, n_days):
             for a in range(n_assets):
                 if asset_wealth[a] > 0:
-                    asset_wealth[a] *= (1 + rets[d, a])
+                    asset_wealth[a] *= 1 + rets[d, a]
                     # TP or SL hit: liquidate into cash
-                    if asset_wealth[a] >= tp_levels[a] or asset_wealth[a] < sl_levels[a]:
+                    if (
+                        asset_wealth[a] >= tp_levels[a]
+                        or asset_wealth[a] < sl_levels[a]
+                    ):
                         cash += asset_wealth[a]
                         asset_wealth[a] = 0.0
 
             path_wealth[d] = float(np.sum(asset_wealth) + cash)
 
         term_wealth[i] = path_wealth[-1]
-        mdd_values[i]  = max_drawdown(path_wealth)
+        mdd_values[i] = max_drawdown(path_wealth)
 
     return {
-        "terminal_wealth":       term_wealth,
-        "max_drawdown":          mdd_values,
-        "mean_terminal_wealth":  float(np.mean(term_wealth)),
-        "std_terminal_wealth":   float(np.std(term_wealth)),
-        "mean_mdd":              float(np.mean(mdd_values)),
-        "std_mdd":               float(np.std(mdd_values)),
+        "terminal_wealth": term_wealth,
+        "max_drawdown": mdd_values,
+        "mean_terminal_wealth": float(np.mean(term_wealth)),
+        "std_terminal_wealth": float(np.std(term_wealth)),
+        "mean_mdd": float(np.mean(mdd_values)),
+        "std_mdd": float(np.std(mdd_values)),
     }

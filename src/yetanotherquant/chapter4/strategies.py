@@ -8,16 +8,17 @@ Functions for:
   - Binomial trading system simulation
 """
 
-import numpy as np
-import polars as pl
-import pandas as pd
 import matplotlib.pyplot as plt
-from yetanotherquant.chapter3.returns import max_drawdown
+import numpy as np
+import pandas as pd
+import polars as pl
 
+from yetanotherquant.chapter3.returns import max_drawdown
 
 # ---------------------------------------------------------------------------
 # Moving Average strategies
 # ---------------------------------------------------------------------------
+
 
 def simple_ma_strategy(prices: np.ndarray, ma_days: int = 200) -> dict:
     """
@@ -55,7 +56,9 @@ def simple_ma_strategy(prices: np.ndarray, ma_days: int = 200) -> dict:
     return {"ma_wealth": ma_wealth, "bh_wealth": bh_wealth, "n_trades": n_trades}
 
 
-def dual_ma_crossover(prices: np.ndarray, short_days: int = 38, long_days: int = 200) -> dict:
+def dual_ma_crossover(
+    prices: np.ndarray, short_days: int = 38, long_days: int = 200
+) -> dict:
     """
     Golden-cross / death-cross rule: buy when MA_short > MA_long, sell otherwise.
 
@@ -63,7 +66,7 @@ def dual_ma_crossover(prices: np.ndarray, short_days: int = 38, long_days: int =
     """
     n = len(prices)
     ma_short = pd.Series(prices).rolling(short_days).mean().to_numpy()
-    ma_long  = pd.Series(prices).rolling(long_days).mean().to_numpy()
+    ma_long = pd.Series(prices).rolling(long_days).mean().to_numpy()
 
     signal = "inCash"
     buy_price = 0.0
@@ -103,14 +106,23 @@ def backtest_universe(
             continue
         try:
             res = strategy_fn(price_data[ticker], **strategy_kwargs)
-            rows.append({
-                "ticker":       ticker,
-                "ma_wealth":    res["ma_wealth"],
-                "bh_wealth":    res["bh_wealth"],
-                "wealth_diff":  res["bh_wealth"] - res["ma_wealth"],
-            })
-        except Exception as e:
-            rows.append({"ticker": ticker, "ma_wealth": None, "bh_wealth": None, "wealth_diff": None})
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "ma_wealth": res["ma_wealth"],
+                    "bh_wealth": res["bh_wealth"],
+                    "wealth_diff": res["bh_wealth"] - res["ma_wealth"],
+                }
+            )
+        except Exception:
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "ma_wealth": None,
+                    "bh_wealth": None,
+                    "wealth_diff": None,
+                }
+            )
 
     return pl.DataFrame(rows)
 
@@ -119,7 +131,10 @@ def backtest_universe(
 # Seasonality (4_4.r)
 # ---------------------------------------------------------------------------
 
-def monthly_seasonality(monthly_returns: pl.DataFrame, return_col: str = "return") -> pl.DataFrame:
+
+def monthly_seasonality(
+    monthly_returns: pl.DataFrame, return_col: str = "return"
+) -> pl.DataFrame:
     """
     Compute average return by calendar month.
 
@@ -128,43 +143,67 @@ def monthly_seasonality(monthly_returns: pl.DataFrame, return_col: str = "return
 
     Mirrors R: 4_4.r
     """
-    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    month_labels = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
 
-    df = monthly_returns.with_columns(
-        pl.col("period").dt.month().alias("month_num")
-    )
+    df = monthly_returns.with_columns(pl.col("period").dt.month().alias("month_num"))
     stats = (
         df.group_by("month_num")
-        .agg([
-            pl.col(return_col).mean().alias("mean_return"),
-            pl.col(return_col).median().alias("median_return"),
-            pl.col(return_col).std().alias("std_return"),
-        ])
+        .agg(
+            [
+                pl.col(return_col).mean().alias("mean_return"),
+                pl.col(return_col).median().alias("median_return"),
+                pl.col(return_col).std().alias("std_return"),
+            ]
+        )
         .sort("month_num")
         .with_columns(
-            pl.col("month_num").map_elements(
-                lambda m: month_labels[m - 1], return_dtype=pl.Utf8
-            ).alias("month_name")
+            pl.col("month_num")
+            .map_elements(lambda m: month_labels[m - 1], return_dtype=pl.Utf8)
+            .alias("month_name")
         )
     )
     return stats
 
 
-def plot_seasonality_boxplot(monthly_returns: pl.DataFrame, return_col: str = "return") -> plt.Figure:
+def plot_seasonality_boxplot(
+    monthly_returns: pl.DataFrame, return_col: str = "return"
+) -> plt.Figure:
     """
     Box plot of returns grouped by calendar month.
 
     Mirrors R: 4_4.r — boxplot(Return~Month, data=tmp)
     """
-    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    month_labels = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
 
-    df = (
-        monthly_returns
-        .with_columns(pl.col("period").dt.month().alias("month_num"))
-        .sort("month_num")
-    )
+    df = monthly_returns.with_columns(
+        pl.col("period").dt.month().alias("month_num")
+    ).sort("month_num")
 
     groups = [
         df.filter(pl.col("month_num") == m)[return_col].drop_nulls().to_numpy()
@@ -182,6 +221,7 @@ def plot_seasonality_boxplot(monthly_returns: pl.DataFrame, return_col: str = "r
 # ---------------------------------------------------------------------------
 # Binomial trading system simulation (4_5.r)
 # ---------------------------------------------------------------------------
+
 
 def simulate_trading_system(
     n_trades: int = 395,
@@ -202,18 +242,18 @@ def simulate_trading_system(
     outcomes = rng.binomial(1, win_prob, size=(n_sim, n_trades))  # 1=win, 0=loss
 
     term_wealth = np.empty(n_sim)
-    mdd_values  = np.empty(n_sim)
+    mdd_values = np.empty(n_sim)
 
     for i in range(n_sim):
         rets = np.where(outcomes[i] == 1, ret_per_trade, -ret_per_trade)
         wealth = np.cumprod(1 + rets)
         wealth_full = np.insert(wealth, 0, 1.0)
         term_wealth[i] = wealth[-1]
-        mdd_values[i]  = max_drawdown(wealth_full)
+        mdd_values[i] = max_drawdown(wealth_full)
 
     return {
         "terminal_wealth": term_wealth,
-        "max_drawdown":    mdd_values,
+        "max_drawdown": mdd_values,
         "mean_terminal_wealth": float(np.mean(term_wealth)),
-        "mean_mdd":             float(np.mean(mdd_values)),
+        "mean_mdd": float(np.mean(mdd_values)),
     }

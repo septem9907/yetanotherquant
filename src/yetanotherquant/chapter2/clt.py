@@ -5,9 +5,9 @@ Demonstrates that the sum of many independent Bernoulli trials approaches
 a normal distribution (CLT). Uses a slightly biased coin (p=0.55).
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm
-import matplotlib.pyplot as plt
 
 
 def simulate_coin_tosses(
@@ -35,7 +35,9 @@ def plot_histogram_with_normal(
     Mirrors R: forFig2_1.r
     """
     fig, ax = plt.subplots()
-    counts, bin_edges, _ = ax.hist(tosses, bins=10, color="grey", edgecolor="white", label="Observed")
+    counts, bin_edges, _ = ax.hist(
+        tosses, bins=10, color="grey", edgecolor="white", label="Observed"
+    )
     bin_width = bin_edges[1] - bin_edges[0]
 
     mu, sigma = float(np.mean(tosses)), float(np.std(tosses))

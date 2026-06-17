@@ -6,15 +6,15 @@ Computes price, delta, gamma, and vega across a range of underlying prices and
 implied volatilities (modelling the inverse vol-price relationship).
 """
 
-import numpy as np
-from scipy.stats import norm
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
-
+from scipy.stats import norm
 
 # ---------------------------------------------------------------------------
 # Core Black-Scholes formulas
 # ---------------------------------------------------------------------------
+
 
 def _d1(S: float, K: float, T: float, r: float, sigma: float) -> float:
     return (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
@@ -53,20 +53,31 @@ def bs_greeks(S: float, K: float, T: float, r: float, sigma: float) -> dict:
     """
     if T <= 0 or sigma <= 0:
         intrinsic = max(S - K, 0.0)
-        return {"value": intrinsic, "delta": 1.0 if S > K else 0.0, "gamma": 0.0, "vega": 0.0}
+        return {
+            "value": intrinsic,
+            "delta": 1.0 if S > K else 0.0,
+            "gamma": 0.0,
+            "vega": 0.0,
+        }
 
     d1 = _d1(S, K, T, r, sigma)
     d2 = d1 - sigma * np.sqrt(T)
-    price  = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
-    delta  = norm.cdf(d1)
-    gamma  = norm.pdf(d1) / (S * sigma * np.sqrt(T))
-    vega   = S * norm.pdf(d1) * np.sqrt(T)        # per unit sigma (not per 1%)
-    return {"value": float(price), "delta": float(delta), "gamma": float(gamma), "vega": float(vega)}
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    delta = norm.cdf(d1)
+    gamma = norm.pdf(d1) / (S * sigma * np.sqrt(T))
+    vega = S * norm.pdf(d1) * np.sqrt(T)  # per unit sigma (not per 1%)
+    return {
+        "value": float(price),
+        "delta": float(delta),
+        "gamma": float(gamma),
+        "vega": float(vega),
+    }
 
 
 # ---------------------------------------------------------------------------
 # Scenario analysis over price and vol range (6_1.r)
 # ---------------------------------------------------------------------------
+
 
 def option_scenario_sweep(
     S0: float,
@@ -94,15 +105,17 @@ def option_scenario_sweep(
         S = S0 + i / 100
         sigma = max(sigma0 - i * vol_sensitivity, 1e-6)
         g = bs_greeks(S, K, T, r, sigma)
-        rows.append({
-            "price_change_cents": i,
-            "S":     S,
-            "sigma": sigma,
-            "value": g["value"],
-            "delta": g["delta"],
-            "gamma": g["gamma"],
-            "vega":  g["vega"],
-        })
+        rows.append(
+            {
+                "price_change_cents": i,
+                "S": S,
+                "sigma": sigma,
+                "value": g["value"],
+                "delta": g["delta"],
+                "gamma": g["gamma"],
+                "vega": g["vega"],
+            }
+        )
 
     return pl.DataFrame(rows)
 
@@ -123,15 +136,15 @@ def plot_greeks_comparison(
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     x = df_now["price_change_cents"].to_numpy()
     metrics = ["value", "delta", "gamma", "vega"]
-    labels  = ["Price", "Delta", "Gamma", "Vega"]
+    labels = ["Price", "Delta", "Gamma", "Vega"]
 
-    for ax, metric, label in zip(axes.flatten(), metrics, labels):
-        y_now   = df_now[metric].to_numpy()
+    for ax, metric, label in zip(axes.flatten(), metrics, labels, strict=False):
+        y_now = df_now[metric].to_numpy()
         y_later = df_later[metric].to_numpy()
         y_min = min(y_now.min(), y_later.min())
         y_max = max(y_now.max(), y_later.max())
-        ax.scatter(x, y_now,   s=4, color="black", label="Now")
-        ax.plot(x, y_later, color="grey",  linewidth=1.5, label="1yr later")
+        ax.scatter(x, y_now, s=4, color="black", label="Now")
+        ax.plot(x, y_later, color="grey", linewidth=1.5, label="1yr later")
         ax.set_ylim(y_min, y_max)
         ax.set_xlabel("Price change (cents)")
         ax.set_ylabel(label)

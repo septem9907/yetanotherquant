@@ -8,15 +8,14 @@ Functions for:
   - Historical volatility over multiple lookback windows
 """
 
-import numpy as np
-import polars as pl
-from scipy.stats import norm
 import matplotlib.pyplot as plt
-
+import numpy as np
+from scipy.stats import norm
 
 # ---------------------------------------------------------------------------
 # Distribution analysis
 # ---------------------------------------------------------------------------
+
 
 def fit_normal(returns: np.ndarray) -> tuple[float, float]:
     """Estimate mean and standard deviation from a return array."""
@@ -38,8 +37,8 @@ def plot_density_vs_normal(
     x = np.linspace(returns.min(), returns.max(), 400)
     kde = gaussian_kde(returns)
     fig, ax = plt.subplots()
-    ax.plot(x, kde(x),                    color="black", linewidth=2, label="Empirical")
-    ax.plot(x, norm.pdf(x, mu, sigma),    color="grey",  linewidth=2, label="Normal fit")
+    ax.plot(x, kde(x), color="black", linewidth=2, label="Empirical")
+    ax.plot(x, norm.pdf(x, mu, sigma), color="grey", linewidth=2, label="Normal fit")
     ax.set_title(title)
     ax.legend()
     return fig
@@ -103,14 +102,15 @@ def compare_normal_binomial_models(
 
     return {
         "empirical": compound(monthly_returns),
-        "normal":    compound(sim_normal),
-        "binomial":  compound(sim_binary),
+        "normal": compound(sim_normal),
+        "binomial": compound(sim_binary),
     }
 
 
 # ---------------------------------------------------------------------------
 # Wealth-path simulation
 # ---------------------------------------------------------------------------
+
 
 def simulate_wealth_paths(
     mu: float,
@@ -181,10 +181,10 @@ def simulate_terminal_wealth_and_mdd(
         mdd_binom[k] = max_drawdown(np.insert(w_binom, 0, 1.0))
 
     return {
-        "terminal_wealth_normal":  tw_norm,
+        "terminal_wealth_normal": tw_norm,
         "terminal_wealth_binomial": tw_binom,
-        "mdd_normal":              mdd_norm,
-        "mdd_binomial":            mdd_binom,
+        "mdd_normal": mdd_norm,
+        "mdd_binomial": mdd_binom,
     }
 
 
@@ -192,7 +192,10 @@ def simulate_terminal_wealth_and_mdd(
 # Historical volatility (3_7.r)
 # ---------------------------------------------------------------------------
 
-def rolling_volatility(returns: np.ndarray, windows: dict[str, int]) -> dict[str, float]:
+
+def rolling_volatility(
+    returns: np.ndarray, windows: dict[str, int]
+) -> dict[str, float]:
     """
     Compute historical volatility over multiple lookback windows.
 
